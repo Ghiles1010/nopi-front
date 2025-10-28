@@ -32,9 +32,17 @@ export interface StateResponse {
   sessionId: string
 }
 
+// Get API base URL from environment variable or use default
+const getApiUrl = () => {
+  const env = import.meta.env
+  return (env as any).VITE_API_URL || 'http://localhost:3001'
+}
+
+const API_BASE_URL = getApiUrl()
+
 export const sendChatMessage = async (message: string, conversationHistory: string[] = []): Promise<ChatResponse> => {
   const sessionId = localStorage.getItem('sessionId') || 'default'
-  const response = await fetch('/api/chat', {
+  const response = await fetch(`${API_BASE_URL}/api/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -55,7 +63,7 @@ export const sendChatMessage = async (message: string, conversationHistory: stri
 
 export const getState = async (): Promise<StateResponse> => {
   const sessionId = localStorage.getItem('sessionId') || 'default'
-  const response = await fetch('/api/state', {
+  const response = await fetch(`${API_BASE_URL}/api/state`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -72,7 +80,7 @@ export const getState = async (): Promise<StateResponse> => {
 
 export const resetSession = async (): Promise<void> => {
   const sessionId = localStorage.getItem('sessionId') || 'default'
-  const response = await fetch('/api/reset', {
+  const response = await fetch(`${API_BASE_URL}/api/reset`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
