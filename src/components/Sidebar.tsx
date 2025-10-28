@@ -1,5 +1,5 @@
 import React from 'react'
-import { X, RotateCcw, User } from 'lucide-react'
+import { X, RotateCcw } from 'lucide-react'
 import { Button } from './ui/button'
 
 interface SidebarProps {
@@ -53,19 +53,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Empty Space */}
         <div className="flex-1"></div>
-
-        {/* Footer */}
-        <div className="border-t border-gray-200 p-4 mt-auto flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
-              <User className="h-5 w-5 text-gray-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">Utilisateur</p>
-              <p className="text-xs text-gray-500 truncate">user@example.com</p>
-            </div>
-          </div>
-        </div>
       </div>
     </>
   )

@@ -2,10 +2,10 @@ import React from 'react'
 import { SimulationPanel } from './SimulationPanel'
 
 interface SimulationState {
-  prix_achat: number
-  loyer_mensuel: number
-  charges_annuelles: number
-  duree: number
+  prix_achat: number | null
+  loyer_mensuel: number | null
+  charges_annuelles: number | null
+  duree: number | null
 }
 
 interface SimulationData {
@@ -31,7 +31,7 @@ export const SimulationSection: React.FC<SimulationSectionProps> = ({
   state,
 }: SimulationSectionProps) => {
   return (
-    <div className="lg:w-[500px] mx-2 my-4 lg:mx-4 lg:my-4 h-[calc(100vh-8rem)] rounded-lg border border-gray-200 bg-white shadow-sm flex flex-col overflow-hidden">
+    <div className="flex-1 m-4 h-[calc(100vh-8rem)] rounded-lg border border-gray-200 bg-white shadow-sm flex flex-col overflow-hidden">
       <div className="flex-1 overflow-hidden p-4 lg:p-6">
         <SimulationPanel
           simulation={simulation}

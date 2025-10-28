@@ -15,10 +15,10 @@ interface SimulationData {
 }
 
 interface SimulationState {
-  prix_achat: number
-  loyer_mensuel: number
-  charges_annuelles: number
-  duree: number
+  prix_achat: number | null
+  loyer_mensuel: number | null
+  charges_annuelles: number | null
+  duree: number | null
 }
 
 interface SimulationPanelProps {
@@ -27,7 +27,8 @@ interface SimulationPanelProps {
 }
 
 export const SimulationPanel: React.FC<SimulationPanelProps> = ({ simulation, state }) => {
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | null) => {
+    if (value === null) return '-'
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR',
@@ -36,41 +37,20 @@ export const SimulationPanel: React.FC<SimulationPanelProps> = ({ simulation, st
     }).format(value)
   }
 
-  if (!simulation || !state) {
-    return (
-      <div className="h-full p-6 space-y-4 overflow-y-auto">
-        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold mb-4">Paramètres du projet</h3>
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <p className="text-sm text-gray-600 mb-2">Prix d'achat</p>
-              <p className="text-lg text-gray-400">-</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-2">Loyer mensuel</p>
-              <p className="text-lg text-gray-400">-</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-2">Charges annuelles</p>
-              <p className="text-lg text-gray-400">-</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-2">Durée</p>
-              <p className="text-lg text-gray-400">-</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-          <p className="text-sm text-gray-500 text-center">
-            Les résultats de simulation apparaîtront ici une fois que vous aurez fourni les informations nécessaires.
-          </p>
-        </div>
-      </div>
-    )
+  const formatDuration = (value: number | null) => {
+    if (value === null) return '-'
+    return `${value} ans`
   }
 
-  const chartData = [
+  // Show paramètres section even if there's no full simulation yet
+  const currentState = state || {
+    prix_achat: null,
+    loyer_mensuel: null,
+    charges_annuelles: null,
+    duree: null,
+  }
+
+  const chartData = simulation ? [
     {
       regime: 'Micro-BIC',
       net: simulation.micro_bic.net_apres_impots,
@@ -79,7 +59,7 @@ export const SimulationPanel: React.FC<SimulationPanelProps> = ({ simulation, st
       regime: 'Réel',
       net: simulation.reel.net_apres_impots,
     },
-  ]
+  ] : []
 
   return (
     <div className="h-full p-6 space-y-4 overflow-y-auto">
@@ -88,25 +68,43 @@ export const SimulationPanel: React.FC<SimulationPanelProps> = ({ simulation, st
         <div className="grid grid-cols-2 gap-6">
           <div>
             <p className="text-sm text-gray-600 mb-2">Prix d'achat</p>
-            <p className="text-lg font-semibold">{formatCurrency(state.prix_achat)}</p>
+            <p className={`text-lg font-semibold ${currentState.prix_achat ? '' : 'text-gray-400'}`}>
+              {formatCurrency(currentState.prix_achat)}
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-2">Loyer mensuel</p>
-            <p className="text-lg font-semibold">{formatCurrency(state.loyer_mensuel)}</p>
+            <p className={`text-lg font-semibold ${currentState.loyer_mensuel ? '' : 'text-gray-400'}`}>
+              {formatCurrency(currentState.loyer_mensuel)}
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-2">Charges annuelles</p>
-            <p className="text-lg font-semibold">{formatCurrency(state.charges_annuelles)}</p>
+            <p className={`text-lg font-semibold ${currentState.charges_annuelles ? '' : 'text-gray-400'}`}>
+              {formatCurrency(currentState.charges_annuelles)}
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-2">Durée</p>
-            <p className="text-lg font-semibold">{state.duree} ans</p>
+            <p className={`text-lg font-semibold ${currentState.duree ? '' : 'text-gray-400'}`}>
+              {formatDuration(currentState.duree)}
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Résultats de simulation</h3>
+      {!simulation && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+          <p className="text-sm text-gray-500 text-center">
+            Les résultats de simulation apparaîtront ici une fois que vous aurez fourni toutes les informations nécessaires.
+          </p>
+        </div>
+      )}
+
+      {simulation && (
+        <>
+          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold mb-4">Résultats de simulation</h3>
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -150,22 +148,25 @@ export const SimulationPanel: React.FC<SimulationPanelProps> = ({ simulation, st
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Comparaison visuelle</h3>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="regime" />
-              <YAxis />
-              <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
-              />
-              <Bar dataKey="net" fill="#1e293b" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold mb-4">Comparaison visuelle</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="regime" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
+                  <Bar dataKey="net" fill="#1e293b" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
+

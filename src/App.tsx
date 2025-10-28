@@ -1,9 +1,9 @@
-import React, { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Topbar } from './components/Topbar'
-import { Sidebar } from './components/Sidebar'
 import { ChatArea } from './components/ChatArea'
 import { SimulationSection } from './components/SimulationSection'
-import { sendChatMessage, ChatResponse } from './services/api'
+import { sendChatMessage, getState, resetSession, ChatResponse, StateResponse } from './services/api'
+import SessionPage from './pages/Session'
 
 interface Message {
   content: string
@@ -11,10 +11,10 @@ interface Message {
 }
 
 interface SimulationState {
-  prix_achat: number
-  loyer_mensuel: number
-  charges_annuelles: number
-  duree: number
+  prix_achat: number | null
+  loyer_mensuel: number | null
+  charges_annuelles: number | null
+  duree: number | null
 }
 
 interface SimulationData {
@@ -31,11 +31,22 @@ interface SimulationData {
 }
 
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [simulation, setSimulation] = useState<SimulationData | null>(null)
   const [simulationState, setSimulationState] = useState<SimulationState | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [hasSession, setHasSession] = useState(false)
+
+  useEffect(() => {
+    const sessionId = localStorage.getItem('sessionId')
+    if (!sessionId) {
+      if (window.location.pathname !== '/session') {
+        window.location.href = '/session'
+      }
+      return
+    }
+    setHasSession(!!sessionId)
+  }, [])
 
   const handleSendMessage = useCallback(async (message: string) => {
     // Add user message
@@ -51,8 +62,17 @@ function App() {
       
       // Add AI response and update simulation
       setMessages(prev => [...prev, { content: response.reply, isUser: false }])
-      setSimulation(response.simulation)
-      setSimulationState(response.state)
+      
+      // Fetch current state to show partial data in real-time
+      const stateResponse: StateResponse = await getState()
+      setSimulationState(stateResponse.state)
+      
+      // Update simulation only if all info is complete
+      if (response.simulation) {
+        setSimulation(response.simulation)
+      } else {
+        setSimulation(null)
+      }
     } catch (error) {
       console.error('Error sending message:', error)
       setMessages(prev => [...prev, {
@@ -64,39 +84,53 @@ function App() {
     }
   }, [messages])
 
-  const handleRestart = useCallback(() => {
-    setMessages([])
-    setSimulation(null)
-    setSimulationState(null)
-    setSidebarOpen(false)
+  const handleRestart = useCallback(async () => {
+    try {
+      // Reset backend session
+      await resetSession()
+      // Clear local state
+      setMessages([])
+      setSimulation(null)
+      setSimulationState(null)
+    } catch (error) {
+      console.error('Error resetting session:', error)
+      // Still clear local state even if backend reset fails
+      setMessages([])
+      setSimulation(null)
+      setSimulationState(null)
+    }
   }, [])
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('sessionId')
+    window.location.href = '/session'
+  }, [])
+
+  if (!hasSession) {
+    return <SessionPage />
+  }
 
   return (
     <div className="h-screen w-screen flex flex-col bg-background">
       {/* Topbar */}
-      <Topbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+      <Topbar 
+        onLogout={handleLogout}
+      />
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
+      <div className="flex-1 flex flex-col lg:flex-row bg-gray-50 overflow-hidden">
+        <ChatArea
+          messages={messages}
+          isTyping={isLoading}
+          onSendMessage={handleSendMessage}
           onRestart={handleRestart}
+          disabled={isLoading}
         />
 
-        <div className="flex-1 flex flex-col lg:flex-row bg-gray-50">
-          <ChatArea
-            messages={messages}
-            isTyping={isLoading}
-            onSendMessage={handleSendMessage}
-            disabled={isLoading}
-          />
-
-          <SimulationSection
-            simulation={simulation}
-            state={simulationState}
-          />
-        </div>
+        <SimulationSection
+          simulation={simulation}
+          state={simulationState}
+        />
       </div>
     </div>
   )
