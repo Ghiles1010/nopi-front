@@ -1,0 +1,30 @@
+version: '3'
+
+vars:
+  IMAGE: nopi-front
+  CONTAINER: nopi-front
+  PORT: 8081
+  API_URL: http://20.0.153.80
+
+tasks:
+  build:
+    desc: Build frontend Docker image
+    cmds:
+      - docker build --build-arg VITE_API_URL={{.API_URL}} -t {{.IMAGE}} .
+
+  up:
+    desc: Run frontend container
+    cmds:
+      - docker rm -f {{.CONTAINER}} >/dev/null 2>&1 || true
+      - docker run -d --restart unless-stopped --name {{.CONTAINER}} -p {{.PORT}}:80 {{.IMAGE}}
+
+  down:
+    desc: Stop and remove frontend container
+    cmds:
+      - docker rm -f {{.CONTAINER}} >/dev/null 2>&1 || true
+
+  clean:
+    desc: Remove frontend image and container
+    cmds:
+      - task: down
+      - docker rmi {{.IMAGE}} >/dev/null 2>&1 || true

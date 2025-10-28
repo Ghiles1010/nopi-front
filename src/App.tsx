@@ -48,6 +48,28 @@ function App() {
     setHasSession(!!sessionId)
   }, [])
 
+  // Hydrate chat history and extracted state when a session exists
+  useEffect(() => {
+    const hydrateFromBackend = async () => {
+      if (!hasSession) return
+      try {
+        const stateResponse: StateResponse = await getState()
+        // Set extracted info/state
+        setSimulationState(stateResponse.state)
+        // Map backend history to UI messages
+        const hydratedMessages: Message[] = (stateResponse.history || []).map((h) => ({
+          content: h.content,
+          isUser: h.role === 'user',
+        }))
+        setMessages(hydratedMessages)
+      } catch (error) {
+        console.error('Failed to load session state:', error)
+      }
+    }
+
+    hydrateFromBackend()
+  }, [hasSession])
+
   const handleSendMessage = useCallback(async (message: string) => {
     // Add user message
     setMessages(prev => [...prev, { content: message, isUser: true }])
