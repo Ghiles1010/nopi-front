@@ -51,24 +51,30 @@ npm run preview
 ```
 src/
 ├── components/
-│   ├── ui/              # shadcn/ui components
-│   ├── ChatBubble.tsx   # Message bubble component
-│   ├── ChatInput.tsx    # Message input with microphone icon
-│   ├── ChatInterface.tsx # Main chat container
-│   ├── SimulationPanel.tsx # Simulation results display
+│   ├── ui/                 # UI primitives (button, card, input)
+│   ├── ChatArea.tsx        # Conversation container (bubbles, input)
+│   ├── ChatBubble.tsx      # Message bubble
+│   ├── ChatInput.tsx       # Text input + submit
+│   ├── SimulationSection.tsx # Extracted state + results
 │   └── TypingIndicator.tsx # AI typing animation
-├── lib/
-│   └── utils.ts         # Utility functions
+├── pages/
+│   └── Session.tsx         # Session ID gate (stores localStorage)
 ├── services/
-│   └── api.ts           # API integration
-├── App.tsx              # Main application
-├── main.tsx             # Entry point
-└── index.css            # Global styles
+│   └── api.ts              # API client (sendChatMessage, getState, resetSession)
+├── App.tsx                 # App shell; hydrates state on load
+├── main.tsx
+└── index.css
 ```
 
 ## API Integration
 
-The app expects a backend API endpoint at `/api/chat` that accepts POST requests with:
+The app expects a backend with:
+
+- `POST /api/chat` (message → reply + optional simulation)
+- `GET /api/state` (hydrate on load: state, isDone, history)
+- `POST /api/reset`
+
+`/api/chat` accepts:
 
 ```json
 {
@@ -103,6 +109,8 @@ And returns:
 }
 ```
 
+On app load (after a session ID is set), the app calls `GET /api/state` to hydrate the chat history and extracted state so the conversation resumes where it left off.
+
 ## Features in Detail
 
 ### Chat Interface
@@ -129,3 +137,11 @@ The app uses Tailwind CSS with custom design tokens matching shadcn/ui:
 ## License
 
 MIT
+
+## Deployment
+
+- Build a Docker image (Taskfile provided): `task build` then `task up`
+- The container serves static assets on port `80`
+- With nginx in front, proxy:
+  - `/` → frontend container (e.g. `http://127.0.0.1:8081`)
+  - `/api/` → backend (e.g. `http://127.0.0.1:3001`)
