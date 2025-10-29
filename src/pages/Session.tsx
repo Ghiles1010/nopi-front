@@ -29,7 +29,7 @@ const SessionPage: React.FC = () => {
   return (
     <div className="min-h-screen w-screen flex items-center justify-center bg-gray-50 p-6">
       <form onSubmit={handleSave} className="w-full max-w-md bg-white rounded-lg border border-gray-200 shadow-sm p-6 space-y-4">
-        <h1 className="text-xl font-semibold">Connexion</h1>
+        <h1 className="text-xl font-semibold">Salut Eric :')</h1>
         <p className="text-sm text-gray-600">Entrez votre identifiant de session pour continuer la conversation.</p>
         <div>
           <input
@@ -39,7 +39,7 @@ const SessionPage: React.FC = () => {
               setSessionId(e.target.value)
               setError('')
             }}
-            placeholder="Votre ID (ex: email, uuid, etc.)"
+            placeholder="Entrez l'ID de la session"
             className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-800"
             autoFocus
           />
